@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 
 @RestController
 public class CityInfoController {
@@ -20,7 +21,7 @@ public class CityInfoController {
 	 
 	private RestTemplate restTemp= new RestTemplate();
 	@GetMapping("/weatherinfo/{city}")
-	@HystrixCommand(fallbackMethod="getWeatherInfoFromCache")
+	@HystrixCommand(fallbackMethod="getWeatherInfoFromCache" ,commandProperties={@HystrixProperty(name="execution.isolation.thread.timeoutInMilliseconds", value = "5000")})
 	public String getWeatherInfo(@PathVariable String city) {
 		System.out.println("--- calling from server");
 		String url=weatherServcieUrl +"/"+ city;
@@ -31,11 +32,11 @@ public class CityInfoController {
 		return output;
 	}
 	
-	public String getWeatherInfoFromCache(String City) {
+	public String getWeatherInfoFromCache(String city) {
 		
 		System.out.println("----calling from Cache!");
 		
-		String message="From Cache get required data of Weather";
+		String message=cache.get(city);
 		
 		if(message==null) {
 			message=" Opps! WeatherService is down";
